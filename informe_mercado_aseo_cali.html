@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reporte Ejecutivo - Sector Aseo Cali</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1; /* Indigo 500 */
+      --primary-glow: rgba(99, 102, 241, 0.4);
+      --accent: #14b8a6; /* Teal 500 */
+      --gold: #f59e0b; /* Amber 500 */
+      --red: #f43f5e; /* Rose 500 */
+      --blue: #3b82f6; /* Blue 500 */
+      --bg: #030712; /* Gray 950 - pure dark */
+      --surface: rgba(17, 24, 39, 0.6); /* Gray 900 translucent */
+      --text: #f9fafb; /* Gray 50 */
+      --muted: #9ca3af; /* Gray 400 */
+      --border: rgba(255, 255, 255, 0.08);
+      --highlight: rgba(255, 255, 255, 0.03);
+    }
+    
+    * { box-sizing: border-box; }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      position: relative;
+      overflow-x: hidden;
+    }
+    
+    /* Subtle background glow orbs */
+    body::before, body::after {
+      content: '';
+      position: fixed;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: -1;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+    body::before { background: var(--primary); top: -100px; left: -100px; }
+    body::after { background: var(--accent); bottom: -100px; right: -100px; }
+
+    header { padding: 80px 40px 40px; max-width: 1000px; margin: 0 auto; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 24px; position: relative; }
+    .subtitle { font-size: 13px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); margin-bottom: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+    .subtitle::before { content: ''; width: 24px; height: 1px; background: var(--accent); }
+    h1 { font-size: 48px; font-weight: 300; margin: 0 0 24px; letter-spacing: -0.04em; background: linear-gradient(135deg, #fff 0%, #9ca3af 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    p.desc { font-size: 16px; color: var(--muted); max-width: 650px; margin: 0; line-height: 1.8; font-weight: 400; }
+    
+    nav { border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(3, 7, 18, 0.7); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); z-index: 100; }
+    .nav-container { max-width: 1000px; margin: 0 auto; display: flex; gap: 40px; padding: 0 40px; overflow-x: auto; scrollbar-width: none; }
+    .nav-container::-webkit-scrollbar { display: none; }
+    .tab-btn { padding: 24px 0; background: none; border: none; cursor: pointer; font-family: inherit; font-size: 14px; font-weight: 500; color: var(--muted); position: relative; transition: all 0.3s ease; white-space: nowrap; }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active { color: var(--text); }
+    .tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 2px; background: var(--primary); box-shadow: 0 -2px 10px var(--primary-glow); }
+    
+    main { max-width: 1000px; margin: 0 auto; padding: 64px 40px; min-height: 50vh; }
+    .tab-content { display: none; animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .tab-content.active { display: block; }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    
+    .section-title { font-size: 22px; font-weight: 500; color: var(--text); margin: 0 0 32px; letter-spacing: -0.02em; display: flex; align-items: center; gap: 12px; }
+    .section-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(to right, var(--border), transparent); margin-left: 16px; }
+    
+    .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 64px; }
+    
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; transition: all 0.3s ease; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); position: relative; overflow: hidden; }
+    .card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(to right, transparent, rgba(255,255,255,0.1), transparent); }
+    .card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px -10px rgba(0,0,0,0.5); border-color: rgba(255,255,255,0.15); }
+    .card-title { font-size: 12px; color: var(--muted); margin-bottom: 24px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 600; }
+    
+    .chart-container { position: relative; height: 260px; width: 100%; }
+    
+    .metrics-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 24px; margin-bottom: 64px; }
+    .metric-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 28px; backdrop-filter: blur(16px); transition: all 0.3s ease; position: relative; }
+    .metric-card:hover { transform: translateY(-4px); border-color: rgba(255,255,255,0.15); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.4); }
+    .metric-label { font-size: 12px; color: var(--muted); margin-bottom: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+    .metric-value { font-size: 36px; font-weight: 300; color: var(--text); background: linear-gradient(to right, #fff, var(--primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+    
+    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; margin-bottom: 64px; }
+    th { padding: 16px 20px; text-align: center; color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); text-transform: uppercase; font-size: 11px; letter-spacing: 0.1em; }
+    th:first-child { text-align: left; }
+    td { padding: 16px 20px; border-bottom: 1px solid rgba(255,255,255,0.03); text-align: center; transition: background 0.2s; }
+    td:first-child { text-align: left; color: var(--text); font-weight: 500; border-top-left-radius: 12px; border-bottom-left-radius: 12px; }
+    td:last-child { border-top-right-radius: 12px; border-bottom-right-radius: 12px; }
+    tr:hover td { background: var(--highlight); }
+    
+    .heat-cell { padding: 12px; text-align: center; border-radius: 8px; font-weight: 600; font-size: 14px; transition: all 0.2s ease; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05); }
+    .heat-cell:hover { transform: scale(1.08); filter: brightness(1.2); z-index: 10; position: relative; box-shadow: 0 8px 16px rgba(0,0,0,0.4); }
+    
+    .btn-print { padding: 12px 24px; background: rgba(255,255,255,0.03); color: var(--text); border: 1px solid var(--border); border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; transition: all 0.3s ease; backdrop-filter: blur(10px); display: flex; align-items: center; gap: 8px; }
+    .btn-print:hover { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 0 20px var(--primary-glow); transform: translateY(-2px); }
+    
+    .category-tabs { display: flex; gap: 8px; margin-bottom: 32px; background: rgba(0,0,0,0.2); padding: 6px; border-radius: 14px; border: 1px solid var(--border); display: inline-flex; }
+    .cat-btn { padding: 10px 24px; background: transparent; border: none; border-radius: 10px; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--muted); transition: all 0.3s; }
+    .cat-btn:hover { color: var(--text); }
+    .cat-btn.active { color: #fff; background: var(--surface); box-shadow: 0 4px 12px rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); }
+
+    .competitor-row { display: flex; flex-direction: column; gap: 24px; }
+    .comp-item { display: flex; flex-direction: column; gap: 10px; }
+    .comp-header { display: flex; justify-content: space-between; font-size: 13px; align-items: center; }
+    .comp-name { font-weight: 600; color: var(--text); }
+    .comp-score { font-weight: 500; color: var(--muted); background: rgba(255,255,255,0.05); padding: 2px 8px; border-radius: 10px; }
+    .comp-bar-container { width: 100%; height: 6px; background: rgba(0,0,0,0.4); border-radius: 4px; overflow: hidden; box-shadow: inset 0 1px 3px rgba(0,0,0,0.5); }
+    
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 24px; }
+    .feature-card { background: rgba(255,255,255,0.02); border: 1px solid var(--border); border-radius: 16px; padding: 24px; transition: all 0.3s; position: relative; }
+    .feature-card:hover { background: rgba(255,255,255,0.04); transform: translateY(-2px); border-color: rgba(255,255,255,0.1); }
+    .feature-title { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    .feature-title::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .feature-desc { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+    footer { border-top: 1px solid var(--border); padding: 40px; text-align: center; margin-top: 40px; font-size: 12px; color: var(--muted); letter-spacing: 0.05em; }
+
+    @media print {
+      :root { --bg: #fff; --text: #111827; --surface: #fff; --muted: #6b7280; --border: #e5e7eb; }
+      body { background: #fff !important; color: #000 !important; }
+      body::before, body::after { display: none; }
+      nav, .btn-print { display: none !important; }
+      .tab-content { display: block !important; page-break-after: always; opacity: 1 !important; transform: none !important; animation: none !important; }
+      .tab-content:last-child { page-break-after: auto; }
+      .card, .metric-card, .feature-card { border: 1px solid #e5e7eb !important; box-shadow: none !important; break-inside: avoid; background: #fff !important; }
+      h1, .metric-value { background: none; -webkit-text-fill-color: #000; color: #000; }
+      .heat-cell { box-shadow: none !important; border: 1px solid #e5e7eb; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <div class="subtitle">Reporte Ejecutivo · 2026</div>
+      <h1>Inteligencia de Mercado Institucional</h1>
+      <p class="desc">
+        Análisis del sector aseo B2B en Cali. Visualización de tendencias, segmentos de demanda, estrategias digitales y valoración de precios.
+      </p>
+    </div>
+    <button class="btn-print" onclick="window.print()">📄 Exportar PDF</button>
+  </header>
+
+  <nav>
+    <div class="nav-container">
+      <button class="tab-btn active" onclick="openTab('overview')">Tendencias</button>
+      <button class="tab-btn" onclick="openTab('heatmap')">Segmentación</button>
+      <button class="tab-btn" onclick="openTab('digital')">Digital</button>
+      <button class="tab-btn" onclick="openTab('precios')">Valorización</button>
+      <button class="tab-btn" onclick="openTab('competidores')">Competidores</button>
+    </div>
+  </nav>
+
+  <main>
+    <!-- TENDENCIAS -->
+    <div id="overview" class="tab-content active">
+      <h2 class="section-title">Crecimiento y Tamaño</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">EVOLUCIÓN USD MILLONES</div>
+          <div class="chart-container">
+            <canvas id="lineChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">CATEGORÍAS LÍDERES</div>
+          <div class="chart-container">
+            <canvas id="barChartCategories"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="metrics-row">
+        <div class="metric-card"><div class="metric-label">Mercado Col 2023</div><div class="metric-value">USD 1.195M</div></div>
+        <div class="metric-card"><div class="metric-label">Estimado Cali 2025</div><div class="metric-value">USD 175M</div></div>
+        <div class="metric-card"><div class="metric-label">Crecimiento Anual</div><div class="metric-value">~5.0%</div></div>
+        <div class="metric-card"><div class="metric-label">Establecimientos B2B</div><div class="metric-value">2.545</div></div>
+      </div>
+    </div>
+
+    <!-- SEGMENTACION -->
+    <div id="heatmap" class="tab-content">
+      <h2 class="section-title">Distribución de Demanda</h2>
+      <p style="font-size: 15px; color: var(--muted); margin-bottom: 40px; font-weight: 400; line-height: 1.6; max-width: 700px;">
+        Intensidad de demanda mapeada (0-100) según el sector económico y la zona geográfica en Cali.
+      </p>
+      <div style="overflow-x: auto;">
+        <table id="heatMapTable">
+          <thead>
+            <tr>
+              <th>Sector</th>
+              <th>Norte</th>
+              <th>Sur</th>
+              <th>Centro</th>
+              <th>Oeste</th>
+              <th>Ladera</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <h2 class="section-title" style="margin-top: 64px;">Volumen por Sector</h2>
+      <div class="chart-container" style="height: 320px;">
+        <canvas id="stackedBarChart"></canvas>
+      </div>
+    </div>
+
+    <!-- DIGITAL -->
+    <div id="digital" class="tab-content">
+      <h2 class="section-title">Adopción Digital</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">EFICIENCIA POR CANAL</div>
+          <div class="chart-container">
+            <canvas id="digitalBarChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">DISTRIBUCIÓN DE VENTAS</div>
+          <div class="chart-container">
+            <canvas id="salesPieChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="feature-title" style="--accent: var(--primary);">WhatsApp Business API</div>
+          <div class="feature-desc">Principal motor de ventas repetitivas. Catálogos rápidos y gestión de pedidos ágil.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title" style="--accent: var(--red);">Social Video</div>
+          <div class="feature-desc">Demostraciones visuales efectivas en Instagram Reels y TikTok para alcance orgánico.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title" style="--accent: var(--blue);">E-Commerce Institucional</div>
+          <div class="feature-desc">Fuerte oportunidad de crecimiento: representa solo 1.6% de las transacciones actuales.</div>
+        </div>
+        <div class="feature-card">
+          <div class="feature-title" style="--accent: var(--gold);">SEO Local B2B</div>
+          <div class="feature-desc">Posicionamiento orgánico clave para captar búsquedas de suministros al por mayor.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRECIOS -->
+    <div id="precios" class="tab-content">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; flex-wrap: wrap; gap: 24px;">
+        <h2 class="section-title" style="margin: 0;">Análisis de Precios</h2>
+        <div class="category-tabs">
+          <button class="cat-btn active" onclick="loadPrecios('desengrasante', this)">Desengrasante</button>
+          <button class="cat-btn" onclick="loadPrecios('detergente', this)">Detergente</button>
+          <button class="cat-btn" onclick="loadPrecios('lavavajillas', this)">Lavavajillas</button>
+        </div>
+      </div>
+      <div class="card" style="margin-bottom: 64px; padding: 32px;">
+        <div class="chart-container" style="height: 320px;">
+          <canvas id="preciosChart"></canvas>
+        </div>
+      </div>
+      <div style="overflow-x: auto;">
+        <table id="preciosTable">
+          <thead>
+            <tr>
+              <th style="text-align: left;">Formato</th>
+              <th style="text-align: right;">Base</th>
+              <th style="text-align: right;">Yilop</th>
+              <th style="text-align: right;">Alto</th>
+              <th style="text-align: right;">Premium</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- COMPETIDORES -->
+    <div id="competidores" class="tab-content">
+      <h2 class="section-title">Ecosistema Competitivo</h2>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">MAPA DE CAPACIDADES</div>
+          <div class="chart-container" style="height: 340px;">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">PUNTUACIÓN GLOBAL</div>
+          <div class="competitor-row" id="competitorsScores"></div>
+        </div>
+      </div>
+      <div class="feature-grid" id="competitorsDetails">
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    © 2026 Inteligencia de Mercado · Datos: ANDI, Cotelco, DANE
+  </footer>
+
+  <script>
+    // Paleta de colores Premium
+    const C = {
+      primary: "#6366f1",   // Indigo
+      accent: "#14b8a6",    // Teal
+      gold: "#f59e0b",      // Amber
+      red: "#f43f5e",       // Rose
+      blue: "#3b82f6",      // Blue
+      text: "#f9fafb",
+      muted: "#9ca3af",
+      border: "rgba(255,255,255,0.08)",
+      bg: "#030712"
+    };
+
+    Chart.defaults.font.family = "'Inter', sans-serif";
+    Chart.defaults.color = C.muted;
+    Chart.defaults.scale.grid.color = C.border;
+    
+    // Tooltip styles for dark mode
+    Chart.defaults.plugins.tooltip.backgroundColor = "rgba(17, 24, 39, 0.9)";
+    Chart.defaults.plugins.tooltip.titleColor = "#f9fafb";
+    Chart.defaults.plugins.tooltip.bodyColor = "#d1d5db";
+    Chart.defaults.plugins.tooltip.borderColor = "rgba(255,255,255,0.1)";
+    Chart.defaults.plugins.tooltip.borderWidth = 1;
+    Chart.defaults.plugins.tooltip.padding = 12;
+    Chart.defaults.plugins.tooltip.cornerRadius = 12;
+    Chart.defaults.plugins.tooltip.displayColors = true;
+
+    // Tabs logic
+    function openTab(tabId) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById(tabId).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+
+    // 1. Tendencias (Line & Bar)
+    new Chart(document.getElementById('lineChart'), {
+      type: 'line',
+      data: {
+        labels: ["2020", "2021", "2022", "2023", "2024", "2025"],
+        datasets: [
+          { label: 'Colombia', data: [820, 910, 1050, 1195, 1330, 1470], borderColor: C.primary, backgroundColor: "rgba(99, 102, 241, 0.1)", borderWidth: 2, pointRadius: 4, pointBackgroundColor: C.bg, pointBorderWidth: 2, fill: true, tension: 0.4 },
+          { label: 'Cali', data: [95, 105, 122, 140, 158, 175], borderColor: C.gold, backgroundColor: "rgba(245, 158, 11, 0.1)", borderWidth: 2, pointRadius: 4, pointBackgroundColor: C.bg, pointBorderWidth: 2, fill: true, tension: 0.4 }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: { weight: '500' } } } }, scales: { x: { grid: { display: false } }, y: { border: { display: false }, grid: { color: C.border } } } }
+    });
+
+    new Chart(document.getElementById('barChartCategories'), {
+      type: 'bar',
+      data: {
+        labels: ["Lavandería", "Blanqueadores", "Protectores", "Lavavajillas", "Desengrasantes", "Jabones", "Suavizantes"],
+        datasets: [{ data: [722.8, 116.2, 114.2, 113.9, 88.5, 77.7, 63.2], backgroundColor: C.primary, borderRadius: 4 }]
+      },
+      options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { grid: { display: false }, border: { display: false }, ticks: { font: { weight: '500' } } } } }
+    });
+
+    // 2. Segmentación (Heatmap & Stacked Bar)
+    const HEAT_COLORS = [
+      "rgba(255,255,255,0.02)", // Lowest
+      "rgba(99, 102, 241, 0.15)",
+      "rgba(99, 102, 241, 0.35)",
+      "rgba(99, 102, 241, 0.6)",
+      "rgba(99, 102, 241, 0.85)",
+      "#6366f1" // Highest
+    ];
+    function getHeatColor(v) {
+      if (v >= 90) return [HEAT_COLORS[5], "#fff"]; 
+      if (v >= 75) return [HEAT_COLORS[4], "#fff"];
+      if (v >= 60) return [HEAT_COLORS[3], "#fff"]; 
+      if (v >= 45) return [HEAT_COLORS[2], "#fff"];
+      if (v >= 30) return [HEAT_COLORS[1], C.text]; 
+      return [HEAT_COLORS[0], C.muted];
+    }
+    const heatMapData = [
+      { s: "Hoteles & Moteles", vals: [82, 55, 78, 60, 28] }, { s: "Restaurantes", vals: [75, 88, 92, 70, 45] },
+      { s: "Panaderías", vals: [65, 72, 68, 58, 52] }, { s: "Lavanderías", vals: [55, 48, 60, 42, 35] },
+      { s: "Lavaderos Carros", vals: [70, 65, 50, 75, 62] }, { s: "Fast Food", vals: [85, 78, 88, 65, 40] },
+      { s: "Alimentos Precocidos", vals: [60, 80, 72, 55, 30] },
+    ];
+    const tbody = document.querySelector("#heatMapTable tbody");
+    heatMapData.forEach(row => {
+      let tr = document.createElement("tr");
+      let html = `<td>${row.s}</td>`;
+      row.vals.forEach(v => {
+        let [bg, color] = getHeatColor(v);
+        html += `<td><div class="heat-cell" style="background:${bg}; color:${color}">${v}</div></td>`;
+      });
+      tr.innerHTML = html; tbody.appendChild(tr);
+    });
+
+    new Chart(document.getElementById('stackedBarChart'), {
+      type: 'bar',
+      data: {
+        labels: ["Norte", "Sur", "Centro", "Oeste", "Ladera"],
+        datasets: [
+          { label: 'Restaurantes', data: [820, 1100, 1350, 680, 460], backgroundColor: C.primary },
+          { label: 'Hoteles', data: [280, 380, 420, 190, 45], backgroundColor: C.gold },
+          { label: 'Otros', data: [640, 722, 913, 498, 450], backgroundColor: C.red, borderRadius: { topLeft: 4, topRight: 4 } }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: { weight: '500' } } } }, scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, border: { display: false }, grid: { color: C.border } } } }
+    });
+
+    // 3. Digital (Grouped Bar & Pie)
+    new Chart(document.getElementById('digitalBarChart'), {
+      type: 'bar',
+      data: {
+        labels: ["WhatsApp", "Instagram", "TikTok", "Catálogos", "LinkedIn", "Email", "SEO", "Web"],
+        datasets: [
+          { label: 'Adopción', data: [92, 85, 58, 75, 42, 55, 38, 30], backgroundColor: C.gold, borderRadius: 4 },
+          { label: 'Eficiencia', data: [88, 78, 65, 62, 72, 70, 68, 58], backgroundColor: C.primary, borderRadius: 4 }
+        ]
+      },
+      options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: { weight: '500' } } } }, scales: { x: { grid: { display: false } }, y: { border: { display: false }, grid: { color: C.border } } } }
+    });
+
+    new Chart(document.getElementById('salesPieChart'), {
+      type: 'doughnut',
+      data: {
+        labels: ["Directa", "Distribuidores", "WhatsApp", "Web / E-comm", "Física"],
+        datasets: [{ data: [38, 27, 18, 9, 8], backgroundColor: [C.primary, C.accent, C.gold, C.red, "rgba(255,255,255,0.1)"], borderWidth: 0, hoverOffset: 4 }]
+      },
+      options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { position: 'right', labels: { usePointStyle: true, boxWidth: 6, font: { weight: '500' } } } } }
+    });
+
+    // 4. Precios
+    const preciosData = {
+      desengrasante: [
+        { p: "Galón (3.8L)", bajo: 22000, yilop: 28500, alto: 45000, inst: 85000 },
+        { p: "Cuñete (18L)", bajo: 95000, yilop: 118000, alto: 185000, inst: 350000 },
+        { p: "Caneca (200L)", bajo: 980000, yilop: 1250000, alto: 1950000, inst: 3800000 },
+      ],
+      detergente: [
+        { p: "Bolsa 500g", bajo: 3500, yilop: 4200, alto: 7800, inst: 12500 },
+        { p: "Kilo", bajo: 6500, yilop: 8000, alto: 14500, inst: 22000 },
+        { p: "Costal 25kg", bajo: 148000, yilop: 185000, alto: 320000, inst: 498000 },
+      ],
+      lavavajillas: [
+        { p: "500ml", bajo: 4500, yilop: 5800, alto: 9800, inst: 16500 },
+        { p: "Galón (3.8L)", bajo: 29000, yilop: 38000, alto: 62000, inst: 105000 },
+        { p: "Cuñete (18L)", bajo: 128000, yilop: 165000, alto: 258000, inst: 450000 },
+      ]
+    };
+
+    let preciosChartInstance = null;
+    function loadPrecios(cat, btn) {
+      if(btn) {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      }
+      const data = preciosData[cat];
+      const tbody = document.querySelector("#preciosTable tbody");
+      tbody.innerHTML = "";
+      data.forEach(r => {
+        let fmt = v => "$" + v.toLocaleString("es-CO");
+        tbody.innerHTML += `<tr>
+          <td>${r.p}</td>
+          <td style="text-align:right">${fmt(r.bajo)}</td>
+          <td style="text-align:right; font-weight:600; color:${C.primary}">${fmt(r.yilop)}</td>
+          <td style="text-align:right">${fmt(r.alto)}</td>
+          <td style="text-align:right; color:${C.accent}">${fmt(r.inst)}</td>
+        </tr>`;
+      });
+
+      const chartData = {
+        labels: data.map(d => d.p),
+        datasets: [
+          { label: 'Base', data: data.map(d=>d.bajo), backgroundColor: C.red, borderRadius: 4 },
+          { label: 'Yilop', data: data.map(d=>d.yilop), backgroundColor: C.primary, borderRadius: 4 },
+          { label: 'Alto', data: data.map(d=>d.alto), backgroundColor: C.gold, borderRadius: 4 },
+          { label: 'Premium', data: data.map(d=>d.inst), backgroundColor: C.accent, borderRadius: 4 },
+        ]
+      };
+
+      if (preciosChartInstance) {
+        preciosChartInstance.data = chartData;
+        preciosChartInstance.update();
+      } else {
+        preciosChartInstance = new Chart(document.getElementById('preciosChart'), {
+          type: 'bar', data: chartData,
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: { weight: '500' } } } }, scales: { x: { grid: { display: false } }, y: { border: { display: false }, grid: { color: C.border }, ticks: { callback: v => v >= 1000 ? (v/1000)+'k' : v } } } }
+        });
+      }
+    }
+    loadPrecios('desengrasante');
+
+    // 5. Competidores
+    new Chart(document.getElementById('radarChart'), {
+      type: 'radar',
+      data: {
+        labels: ["Precio", "Distribución", "Digital", "Portafolio", "Soporte"],
+        datasets: [
+          { label: 'Yilop', data: [90, 65, 40, 75, 60], borderColor: C.primary, backgroundColor: "rgba(99, 102, 241, 0.2)", borderWidth: 2, pointBackgroundColor: C.primary },
+          { label: 'Ecolab', data: [45, 85, 95, 95, 98], borderColor: C.gold, backgroundColor: "rgba(245, 158, 11, 0.05)", borderWidth: 2, pointBackgroundColor: C.gold },
+          { label: 'Nirvana', data: [85, 55, 70, 80, 65], borderColor: C.muted, backgroundColor: "transparent", borderWidth: 2, borderDash: [4, 4], pointBackgroundColor: C.muted },
+        ]
+      },
+      options: { 
+        responsive: true, maintainAspectRatio: false, 
+        scales: { 
+          r: { 
+            min: 0, max: 100, 
+            ticks: { display: false },
+            grid: { color: "rgba(255,255,255,0.05)" },
+            angleLines: { color: "rgba(255,255,255,0.05)" },
+            pointLabels: { color: C.muted, font: { size: 12, weight: '500' } }
+          } 
+        }, 
+        plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 6, font: { weight: '500' } } } } 
+      }
+    });
+
+    const competitors = [
+      { empresa: "Yilop", origen: "Cali", canales: "WhatsApp", fortaleza: "Precio", puntuacion: 82, color: C.primary },
+      { empresa: "Ecolab", origen: "Intl", canales: "Corporativo", fortaleza: "Respaldo", puntuacion: 90, color: C.gold },
+      { empresa: "Nirvana", origen: "Bogotá", canales: "E-commerce", fortaleza: "Marca Blanca", puntuacion: 68, color: C.muted },
+      { empresa: "Arla", origen: "Col", canales: "Ventas", fortaleza: "Portafolio", puntuacion: 75, color: C.accent },
+    ];
+    
+    const scoresContainer = document.getElementById("competitorsScores");
+    const detailsContainer = document.getElementById("competitorsDetails");
+    
+    competitors.sort((a, b) => b.puntuacion - a.puntuacion).forEach(c => {
+      scoresContainer.innerHTML += `
+        <div class="comp-item">
+          <div class="comp-header">
+            <span class="comp-name">${c.empresa}</span>
+            <span class="comp-score">${c.puntuacion}</span>
+          </div>
+          <div class="comp-bar-container">
+            <div style="width: ${c.puntuacion}%; height: 100%; background: ${c.color}; border-radius: 4px; box-shadow: 0 0 10px ${c.color}"></div>
+          </div>
+        </div>`;
+        
+      detailsContainer.innerHTML += `
+        <div class="feature-card">
+          <div class="feature-title" style="--accent: ${c.color};">${c.empresa}</div>
+          <div class="feature-desc" style="display: grid; gap: 8px; margin-top: 16px;">
+            <div style="display: flex; justify-content: space-between;"><span style="color:var(--muted)">Origen</span><span style="color:var(--text); font-weight:500;">${c.origen}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span style="color:var(--muted)">Canales</span><span style="color:var(--text); font-weight:500;">${c.canales}</span></div>
+            <div style="display: flex; justify-content: space-between;"><span style="color:var(--muted)">Ventaja</span><span style="color:var(--text); font-weight:500;">${c.fortaleza}</span></div>
+          </div>
+        </div>`;
+    });
+  </script>
+</body>
+</html>
